@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pprint
+import random
 
 def get_uniform_policy(num_states=25, num_actions=4):
     """
@@ -170,7 +171,8 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
             V[s_index] = new_val
             delta = max(delta, abs(v - V[s_index]))
     V2d = np.reshape(V, (-1, 5))
-    print(V2d)
+    np.set_printoptions(precision=2)
+    # print(V2d)
     return(V2d)
 
 def policy_iter(P, theta=0.0001, gamma=0.9):
@@ -192,11 +194,51 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
         V - (5, 5) numpy array where each entry is the value of the corresponding location,
                    calculated according to policy.
     """
-    print("IMPLEMENT ME!")
+    # V = policy_eval(P)
+    policy = get_uniform_policy()
+    options = [0,1,2,3]
+    i = 0
+    policy_stable = False
+    while not policy_stable:
+        # evaluate policy 
+        V = policy_eval(P, policy=policy)
+        V = V.flatten()
+        policy_stable = True
+        # sweep through state space
+        for index, s in enumerate(V):
+            # choose old action based on probabilities
+            probabilities = policy[index]
+            old_action = random.choices(options, probabilities, k=1)[0]
+            # choose new action by evaluating next state
+            actions = []
+            for direction,a in enumerate(policy[index]):
+                state_key = 's' + str(index)
+                action_key = 'a' + str(direction)
+                transitions = P[state_key][action_key]
+                next_states_val = 0
+                # loop over next states
+                for transition in transitions:
+                    # sum over s' (p(s',r|s,a)[r + gamma V(s')])
+                    s_prime = int(transition[1][1:])
+                    next_states_val += transition[0] * (transition[2] + gamma * V[s_prime])
+                actions.append(next_states_val)
+            # print(f'index: {index}, old action: {old_action} ------ actions: {actions}')
+            # get new action (0,1,2, or 3)
+            new_action = actions.index(max(actions))
+            updated = np.zeros(4)
+            updated[new_action] = 1
+            policy[index] = updated
+            # unchanged: done with policy iteration
+            if old_action != new_action:
+                policy_stable = False
+        # print(i)
+        i += 1
+    visualize_policy(policy)
+    V2d = np.reshape(V, (-1, 5))
+    print(V2d)
+    return policy, V2d
+
 
 if __name__ == '__main__':
-    # print(get_uniform_policy())
     grid = gridworld()
-    # pprint.pprint(grid)
-    # visualize_policy(get_uniform_policy())
-    policy_eval(grid)
+    policy_iter(grid)
