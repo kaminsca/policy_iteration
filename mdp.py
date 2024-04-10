@@ -77,12 +77,12 @@ def gridworld(slip_prob=0.1):
         if index == 1:
             for action in range (4):
                 action_key = 'a' + str(action)
-                a[action_key] = [1, 's21', 10]
+                a[action_key] = [[1, 's21', 10]]
         # From state B, all four actions yield a reward of +5 and take the agent to B’ (13) deterministically
         elif index == 3:
             for action in range (4):
                 action_key = 'a' + str(action)
-                a[action_key] = [1, 's13', 5]
+                a[action_key] = [[1, 's13', 5]]
         else:
             for action in range (4):
                 action_key = 'a' + str(action)
@@ -139,7 +139,39 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
         V - (5, 5) numpy array where each entry is the value of the corresponding location.
             Initialized with zeros.
     """
-    print("IMPLEMENT ME!")
+    V = np.zeros(25)
+    # print(V)
+    # print(policy)
+    # pprint.pprint(P)
+    delta = theta + 1
+    while delta > theta:
+        delta = 0
+        # loop over states
+        for s_index,s in enumerate(policy):
+            # s might look like [0.25 0.25 0.25 0.25]
+            v = V[s_index]
+            new_val = 0
+            # print()
+            # loop over actions probabilities in each state
+            for direction, prob in enumerate(s):
+                state_key = 's' + str(s_index)
+                action_key = 'a' + str(direction)
+                transitions = P[state_key][action_key]
+                next_states_val = 0
+                # loop over next states
+                for transition in transitions:
+                    # transition might look like [0.9, 's0', -1]
+                    s_prime = int(transition[1][1:])
+                    # probability * (r + gamma * V(s_prime))
+                    next_states_val += transition[0] * (transition[2] + gamma * V[s_prime])
+                # pi(a|s) * sum of next states (probability * (r + gamma * V(s_prime)))
+                new_val += prob * next_states_val
+                # print(state_key, action_key, prob, transitions, new_val)
+            V[s_index] = new_val
+            delta = max(delta, abs(v - V[s_index]))
+    V2d = np.reshape(V, (-1, 5))
+    print(V2d)
+    return(V2d)
 
 def policy_iter(P, theta=0.0001, gamma=0.9):
     """
@@ -165,5 +197,6 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
 if __name__ == '__main__':
     # print(get_uniform_policy())
     grid = gridworld()
-    pprint.pprint(grid)
-    # visualize_policy()
+    # pprint.pprint(grid)
+    # visualize_policy(get_uniform_policy())
+    policy_eval(grid)
