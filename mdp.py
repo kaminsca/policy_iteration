@@ -93,31 +93,31 @@ def gridworld(slip_prob=0.1):
                     # off grid -- stay still
                     if index < 5:
                         # results: prbability, next state, reward
-                        res.append([no_slip, key, -1])
+                        res.append([1, key, -1])
                     else:
                         res.append([no_slip, 's' + str(index - 5), 0])
-                    res.append([slip_prob, key, 0])
+                        res.append([slip_prob, key, 0])
                 # action 1: east
                 elif action == 1:
                     if index % 5 == 4:
-                        res.append([no_slip, key, -1])
+                        res.append([1, key, -1])
                     else:
                         res.append([no_slip, 's' + str(index + 1), 0])
-                    res.append([slip_prob, key, 0])
+                        res.append([slip_prob, key, 0])
                 # action 2: south
                 elif action == 2:
                     if index > 19:
-                        res.append([no_slip, key, -1])
+                        res.append([1, key, -1])
                     else:
                         res.append([no_slip, 's' + str(index + 5), 0])
-                    res.append([slip_prob, key, 0])
+                        res.append([slip_prob, key, 0])
                 # action 3: west
                 else:
                     if index % 5 == 0:
-                        res.append([no_slip, key, -1])
+                        res.append([1, key, -1])
                     else:
                         res.append([no_slip, 's' + str(index - 1), 0])
-                    res.append([slip_prob, key, 0])
+                        res.append([slip_prob, key, 0])
                 a[action_key] = res
                 # print(res)
         # print(key)
@@ -146,11 +146,12 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
     # pprint.pprint(P)
     delta = theta + 1
     while delta > theta:
+        V_old = np.copy(V)
         delta = 0
         # loop over states
         for s_index,s in enumerate(policy):
             # s might look like [0.25 0.25 0.25 0.25]
-            v = V[s_index]
+            v = V_old[s_index]
             new_val = 0
             # print()
             # loop over actions probabilities in each state
@@ -164,7 +165,7 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
                     # transition might look like [0.9, 's0', -1]
                     s_prime = int(transition[1][1:])
                     # probability * (r + gamma * V(s_prime))
-                    next_states_val += transition[0] * (transition[2] + gamma * V[s_prime])
+                    next_states_val += transition[0] * (transition[2] + gamma * V_old[s_prime])
                 # pi(a|s) * sum of next states (probability * (r + gamma * V(s_prime)))
                 new_val += prob * next_states_val
                 # print(state_key, action_key, prob, transitions, new_val)
@@ -172,7 +173,7 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
             delta = max(delta, abs(v - V[s_index]))
     V2d = np.reshape(V, (-1, 5))
     np.set_printoptions(precision=2)
-    # print(V2d)
+    print(V2d)
     return(V2d)
 
 def policy_iter(P, theta=0.0001, gamma=0.9):
@@ -222,6 +223,7 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
                     next_states_val += transition[0] * (transition[2] + gamma * V[s_prime])
                 actions.append(next_states_val)
             # get new action (0,1,2, or 3)
+            actions = np.around(actions, 2)
             max_action = max(actions)
             updated = np.zeros(4)
             max_indices = np.where(actions == max_action)[0]
@@ -243,5 +245,5 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
 
 if __name__ == '__main__':
     grid = gridworld()
-    # policy_eval(grid)
+    policy_eval(grid)
     policy_iter(grid)
