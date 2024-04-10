@@ -207,8 +207,7 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
         # sweep through state space
         for index, s in enumerate(V):
             # choose old action based on probabilities
-            probabilities = policy[index]
-            old_action = random.choices(options, probabilities, k=1)[0]
+            probabilities = np.copy(policy[index]) 
             # choose new action by evaluating next state
             actions = []
             for direction,a in enumerate(policy[index]):
@@ -222,18 +221,21 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
                     s_prime = int(transition[1][1:])
                     next_states_val += transition[0] * (transition[2] + gamma * V[s_prime])
                 actions.append(next_states_val)
-            # print(f'index: {index}, old action: {old_action} ------ actions: {actions}')
             # get new action (0,1,2, or 3)
-            new_action = actions.index(max(actions))
+            max_action = max(actions)
             updated = np.zeros(4)
-            updated[new_action] = 1
+            max_indices = np.where(actions == max_action)[0]
+            for j in max_indices:
+                updated[j] = 1.0 / len(max_indices)
             policy[index] = updated
             # unchanged: done with policy iteration
-            if old_action != new_action:
+            # print('i', index, 'prob', probabilities, 'policy', policy[index])
+            comparison = probabilities == policy[index]
+            if not comparison.all():
                 policy_stable = False
         # print(i)
+        visualize_policy(policy)
         i += 1
-    visualize_policy(policy)
     V2d = np.reshape(V, (-1, 5))
     print(V2d)
     return policy, V2d
@@ -241,4 +243,5 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
 
 if __name__ == '__main__':
     grid = gridworld()
+    # policy_eval(grid)
     policy_iter(grid)
