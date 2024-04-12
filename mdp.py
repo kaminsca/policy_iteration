@@ -1,8 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import pprint
-import random
-
+import pprint as pprint
 def get_uniform_policy(num_states=25, num_actions=4):
     """
     Returns a uniform policy, where for each state there is a uniform probability
@@ -119,8 +116,6 @@ def gridworld(slip_prob=0.1):
                         res.append([no_slip, 's' + str(index - 1), 0])
                         res.append([slip_prob, key, 0])
                 a[action_key] = res
-                # print(res)
-        # print(key)
         P[key] = a
     return P
 
@@ -172,8 +167,6 @@ def policy_eval(P, policy=get_uniform_policy(), theta=0.0001, gamma=0.9):
             V[s_index] = new_val
             delta = max(delta, abs(v - V[s_index]))
     V2d = np.reshape(V, (-1, 5))
-    np.set_printoptions(precision=2)
-    print(V2d)
     return(V2d)
 
 def policy_iter(P, theta=0.0001, gamma=0.9):
@@ -236,14 +229,20 @@ def policy_iter(P, theta=0.0001, gamma=0.9):
             if not comparison.all():
                 policy_stable = False
         # print(i)
-        visualize_policy(policy)
+        # visualize_policy(policy)
         i += 1
     V2d = np.reshape(V, (-1, 5))
-    print(V2d)
     return policy, V2d
 
 
 if __name__ == '__main__':
-    grid = gridworld()
-    policy_eval(grid)
-    policy_iter(grid)
+    P = gridworld()
+    print('P: ')
+    pprint.pprint(P)
+    eval = policy_eval(P)
+    np.set_printoptions(precision=2)
+    print('initial evaluation: \n', eval)
+    pi_star, v_star = policy_iter(P)
+    print('pi*: ')
+    visualize_policy(pi_star)
+    print('v*: \n', v_star)
